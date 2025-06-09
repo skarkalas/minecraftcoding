@@ -1,0 +1,661 @@
+<html>
+<link rel="stylesheet" href="css/bootstrap.min.css" />
+<link rel="stylesheet" href="css/fa.min.css" />
+<script src="js/jquery-3.7.1.min.js"></script>
+<script src="js/popper.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
+
+<head>
+	<title>Minecraft Coding</title>
+	<link rel="shortcut icon" href="textures/icon.png">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<nav id="navbar" class="navbar bg-primary navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+	<div class="container-fluid">
+		<a class="navbar-brand fs-2" href="#">Minecraft Coding</a>
+		<form class="d-flex">
+			<div class="alert alert-light me-2" role="alert" id="playerCoords" data-toggle="tooltip"
+				title="Player coordinates">
+				(x:0,y:0,z:0)
+			</div>
+			<div class="alert alert-light me-2" role="alert" id="cursorCoords" data-toggle="tooltip"
+				title="Cursor coordinates">
+				(x:0,y:0,z:0)
+			</div>
+			<div class="btn-group" role="group" aria-label="Toolbar">
+				<button class="btn btn-light btn-lg" type="button" id="blockly-btn" data-bs-toggle="modal"
+					title="Open blockly editor" data-bs-target="#ModalSlide"><i
+						class="fa-solid fa-cubes-stacked"></i></button>
+				<button class="btn btn-light btn-lg" type="button" id="undo" title="Undo"><i
+						class="fa-solid fa-rotate-left"></i></button>
+				<!-- <button class="btn btn-light btn-lg" type="button" id="obj" title="3D Model"><i
+						class="fa-solid fa-rotate-left"></i></button> -->
+				<button class="btn btn-light btn-lg" type="button" id="save" title="Save to Computer"><i
+						class="fas fa-download"></i></button>
+				<button class="btn btn-light btn-lg" type="button" id="load" title="Load from Computer"><i
+						class="fas fa-upload"></i>
+					<input type="file" id="load-scene" hidden="hidden" accept=".json" /></button>
+				<button class="btn btn-light btn-lg" type="button" id="help" data-bs-toggle="modal" title="Help"
+					data-bs-target="#ModalHelp"><i class='fas fa-question-circle'></i></button>
+				<button class="btn btn-light btn-lg" type="button" id="info" data-bs-toggle="modal" title="Info"
+					data-bs-target="#ModalInfo"><i class='fas fa-info-circle'></i></button>
+			</div>
+		</form>
+	</div>
+</nav>
+
+<button id="play" type="button" class="btn btn-primary"
+	style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -125%);">Press to Play</button>
+
+<img src="textures/dot.png"
+	style="position: absolute; width: 10px; left: 50%; top: 50%; transform: translate(-50%, -50%);">
+<img src="textures/grassInventory.png"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-250%, -110%);">
+<img src="textures/inventoryBorder.png" id="grassSelect"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-250%, -110%);">
+<img src="textures/dirtInventory.png"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-150%, -110%);">
+<img src="textures/inventoryBorder.png" id="dirtSelect"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-150%, -110%);">
+<img src="textures/stoneInventory.png"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-50%, -110%);">
+<img src="textures/inventoryBorder.png" id="stoneSelect"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(-50%, -110%);">
+<img src="textures/wwoodInventory.png"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(+50%, -110%);">
+<img src="textures/inventoryBorder.png" id="woodSelect"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(+50%, -110%);">
+<img src="textures/brickInventory.png"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(+150%, -110%);">
+<img src="textures/inventoryBorder.png" id="brickSelect"
+	style="position: absolute; width: 100px; left: 50%; top: 100%; transform: translate(+150%, -110%);">
+
+<body id="hide_id" style="background-color: black;">
+
+	<div id="spinnerContainer" class="d-flex justify-content-center align-items-center" style="height: 100vh; display: none !important;">
+		<div class="spinner-border text-danger" role="status" style=" width: 3rem; height: 3rem;">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+
+	<div class="modal fade modalblockly" id="ModalSlide" tabindex="-1" role="dialog" aria-labelledby="label"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-slideout" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title align-right" id="label">Blockly Editor</h5>
+				</div>
+				<div class="modal-body">
+					<div id="blocklyArea" class="editorContainer">
+						<div id="blocklyDiv"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<div class="offset-sm-1 col-sm-6">
+						<div class="btn-group btn-group-lg" style="width: 100%;">
+							<button id="run-code" type="button" class="btn btn-secondary" data-toggle="tooltip"
+								title="Execute your Code"><i class='fas fa-play'></i></button>
+							<button id="reset" type="button" class="btn btn-outline-secondary" data-toggle="tooltip"
+								title="Undo changes"><i class='fas fa-undo-alt'></i></button>
+							<button id="delete-code" type="button" class="btn btn-outline-secondary"
+								data-toggle="tooltip" title="Delete code"><i class='fas fa-trash-alt'></i></button>
+							<button id="download-code" type="button" class="btn btn-outline-secondary"
+								data-toggle="tooltip" title="Save to Computer"><i class='fas fa-download'></i></button>
+							<button id="upload-code" type="button" class="btn btn-outline-secondary"
+								data-toggle="tooltip" title="Load from Computer">
+								<i class='fas fa-upload'></i>
+								<input type="file" id="upload-file-input" hidden="hidden" accept=".json" />
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- The Help Modal -->
+	<div class="modal fade" id="ModalHelp" tabindex="-1" role="dialog" aria-labelledby="ModalHelp" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">Minecraft Controls</h4>
+				</div>
+				<!-- Modal body -->
+				<div class="modal-body">
+					<table class="table table-dark table-hover">
+						<thead>
+							<tr>
+								<th scope="col">Instruction</th>
+								<th scope="col">Key</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Stop User Interaction:</td>
+								<td>[Esc]</td>
+							</tr>
+							<tr>
+								<td>Control Camera:</td>
+								<td>[Mouse]</td>
+							</tr>
+							<tr>
+								<td>Move Forward:</td>
+								<td>[W]</td>
+							</tr>
+							<tr>
+								<td>Move Backward:</td>
+								<td>[S]</td>
+							</tr>
+							<tr>
+								<td>Move Right:</td>
+								<td>[D]</td>
+							</tr>
+							<tr>
+								<td>Move Left:</td>
+								<td>[A]</td>
+							</tr>
+							<tr>
+								<td>Move Up:</td>
+								<td>[Space]</td>
+							</tr>
+							<tr>
+								<td>Move Down:</td>
+								<td>[Q]</td>
+							</tr>
+							<tr>
+								<td>Create Block:</td>
+								<td>[Right mouse button]</td>
+							</tr>
+							<tr>
+								<td>Destroy Block:</td>
+								<td>[Left mouse button]</td>
+							</tr>
+							<tr>
+								<td>Select Block Material:</td>
+								<td>[1, 2, 3, 4, 5]</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<!-- Modal footer -->
+				<div class="modal-footer d-flex justify-content-between">
+					<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- The Info Modal -->
+	<div class="modal fade" id="ModalInfo" tabindex="-1" role="dialog" aria-labelledby="ModalInfoLabel"
+		aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title" id="ModalInfoLabel">What is Minecraft Coding?</h4>
+				</div>
+				<!-- Modal body -->
+				<div class="modal-body">
+					<p><b>Minecraft Coding</b> is a learning environment designed to help people develop computational
+						and spatial thinking.</p>
+					<p>Learners are given the option to play Minecraft using Blockly to build their environment.</p>
+					<p>Minecraft is used as a creative playground for learners that want to experiment with automations
+						and geometry in an exploratory 3D space.</p>
+					<hr />
+					<div>
+						<h5 class="mb-2">Contact Information</h5>
+						<div class="row">
+							<div class="col-sm-6">
+								<p class="mb-1"><b style="font-size: 14px;">Dr. Sokratis Karkalas</b></p>
+								<p class="mb-1" style="font-size: 12px;">School of Computing and Engineering</p>
+								<p class="mb-1" style="font-size: 12px;">University of Derby</p>
+								<p class="mb-1"><a href="mailto:s.karkalas@derby.ac.uk"
+										style="font-size: 12px;">s.karkalas@derby.ac.uk</a></p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Modal footer -->
+				<div class="modal-footer d-flex justify-content-between">
+					<div class="container-fluid">
+						<div class="row w-100">
+							<div class="col-6 text-left">
+								<img src="img/derby.png" alt="Image 1" class="rounded float-left img-fluid"
+									style="height: 7vh;">
+							</div>
+							<div class="col-6 text-right" style="text-align:right;padding-right:0;">
+								<button type="button" class="btn btn-primary" style="height: 7vh;"
+									data-bs-dismiss="modal">Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- The Error Modal -->
+	<div class="modal fade" id="ModalError" tabindex="-1" aria-labelledby="ModalErrorLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ModalErrorLabel">Message</h5>
+				</div>
+				<div class="modal-body" id="errorModalBody">
+					<!-- Error message will be inserted here -->
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+		<category name="Minecraft" colour="#995ba5">
+			<block type="minecraft_destroy_block"></block>
+			<block type="minecraft_move_forward"></block>
+			<block type="minecraft_move_backward"></block>
+			<block type="minecraft_player_position"></block>
+			<block type="minecraft_cursor_position"></block>
+			<block type="minecraft_move_left"></block>
+			<block type="minecraft_move_right"></block>
+			<block type="minecraft_move_up"></block>
+			<block type="minecraft_move_down"></block>
+			<block type="minecraft_turn_right">
+				<field name="degrees">90</field>
+			</block>
+			<block type="minecraft_turn_left">
+				<field name="degrees">90</field>
+			</block>
+			<block type="minecraft_turn_up">
+				<field name="degrees">90</field>
+			</block>
+			<block type="minecraft_turn_down">
+				<field name="degrees">90</field>
+			</block>
+			<block type="minecraft_select_grass"></block>
+			<block type="minecraft_select_dirt"></block>
+			<block type="minecraft_select_stone"></block>
+			<block type="minecraft_select_wood"></block>
+			<block type="minecraft_select_brick"></block>
+			<block type="minecraft_create_block"></block>
+		</category>
+		<sep></sep>
+		<category name="Logic" colour="#5b80a5">
+			<block type="controls_if"></block>
+			<block type="logic_compare">
+				<field name="OP">EQ</field>
+			</block>
+			<block type="logic_operation">
+				<field name="OP">AND</field>
+			</block>
+			<block type="logic_negate"></block>
+			<block type="logic_boolean">
+				<field name="BOOL">TRUE</field>
+			</block>
+			<block type="logic_null"></block>
+			<block type="logic_ternary"></block>
+		</category>
+		<category name="Loops" colour="#5ba55b">
+			<block type="controls_repeat_ext">
+				<value name="TIMES">
+					<shadow type="math_number">
+						<field name="NUM">10</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="controls_whileUntil">
+				<field name="MODE">WHILE</field>
+			</block>
+			<block type="controls_for">
+				<field name="VAR" id="FHZ_V,rFT_+y+[ad%oZu">i</field>
+				<value name="FROM">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+				<value name="TO">
+					<shadow type="math_number">
+						<field name="NUM">10</field>
+					</shadow>
+				</value>
+				<value name="BY">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="controls_forEach">
+				<field name="VAR" id="?IdLlIU1KE;U;vw6#hq4">j</field>
+			</block>
+			<block type="controls_flow_statements">
+				<field name="FLOW">BREAK</field>
+			</block>
+		</category>
+		<category name="Math" colour="#5b67a5">
+			<block type="math_number">
+				<field name="NUM">0</field>
+			</block>
+			<block type="math_arithmetic">
+				<field name="OP">ADD</field>
+				<value name="A">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+				<value name="B">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_single">
+				<field name="OP">ROOT</field>
+				<value name="NUM">
+					<shadow type="math_number">
+						<field name="NUM">9</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_trig">
+				<field name="OP">SIN</field>
+				<value name="NUM">
+					<shadow type="math_number">
+						<field name="NUM">45</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_constant">
+				<field name="CONSTANT">PI</field>
+			</block>
+			<block type="math_number_property">
+				<mutation divisor_input="false"></mutation>
+				<field name="PROPERTY">EVEN</field>
+				<value name="NUMBER_TO_CHECK">
+					<shadow type="math_number">
+						<field name="NUM">0</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_round">
+				<field name="OP">ROUND</field>
+				<value name="NUM">
+					<shadow type="math_number">
+						<field name="NUM">3.1</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_on_list">
+				<mutation op="SUM"></mutation>
+				<field name="OP">SUM</field>
+			</block>
+			<block type="math_modulo">
+				<value name="DIVIDEND">
+					<shadow type="math_number">
+						<field name="NUM">64</field>
+					</shadow>
+				</value>
+				<value name="DIVISOR">
+					<shadow type="math_number">
+						<field name="NUM">10</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_constrain">
+				<value name="VALUE">
+					<shadow type="math_number">
+						<field name="NUM">50</field>
+					</shadow>
+				</value>
+				<value name="LOW">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+				<value name="HIGH">
+					<shadow type="math_number">
+						<field name="NUM">100</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_random_int">
+				<value name="FROM">
+					<shadow type="math_number">
+						<field name="NUM">1</field>
+					</shadow>
+				</value>
+				<value name="TO">
+					<shadow type="math_number">
+						<field name="NUM">100</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="math_random_float"></block>
+		</category>
+		<category name="Text" colour="#5ba58c">
+			<block type="text">
+				<field name="TEXT"></field>
+			</block>
+			<block type="text_join">
+				<mutation items="2"></mutation>
+			</block>
+			<block type="text_append">
+				<field name="VAR" id="=L!A4ZudY-uE5E7pI;n+">item</field>
+				<value name="TEXT">
+					<shadow type="text">
+						<field name="TEXT"></field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_length">
+				<value name="VALUE">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_isEmpty">
+				<value name="VALUE">
+					<shadow type="text">
+						<field name="TEXT"></field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_indexOf">
+				<field name="END">FIRST</field>
+				<value name="VALUE">
+					<block type="variables_get">
+						<field name="VAR" id="tpBas=DK2-kj[Duv!f5r">text</field>
+					</block>
+				</value>
+				<value name="FIND">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_charAt">
+				<mutation at="true"></mutation>
+				<field name="WHERE">FROM_START</field>
+				<value name="VALUE">
+					<block type="variables_get">
+						<field name="VAR" id="tpBas=DK2-kj[Duv!f5r">text</field>
+					</block>
+				</value>
+			</block>
+			<block type="text_getSubstring">
+				<mutation at1="true" at2="true"></mutation>
+				<field name="WHERE1">FROM_START</field>
+				<field name="WHERE2">FROM_START</field>
+				<value name="STRING">
+					<block type="variables_get">
+						<field name="VAR" id="tpBas=DK2-kj[Duv!f5r">text</field>
+					</block>
+				</value>
+			</block>
+			<block type="text_changeCase">
+				<field name="CASE">UPPERCASE</field>
+				<value name="TEXT">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_trim">
+				<field name="MODE">BOTH</field>
+				<value name="TEXT">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_print">
+				<value name="TEXT">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="text_prompt_ext">
+				<mutation type="TEXT"></mutation>
+				<field name="TYPE">TEXT</field>
+				<value name="TEXT">
+					<shadow type="text">
+						<field name="TEXT">abc</field>
+					</shadow>
+				</value>
+			</block>
+		</category>
+		<category name="Lists" colour="#745ba5">
+			<block type="lists_create_with">
+				<mutation items="0"></mutation>
+			</block>
+			<block type="lists_create_with">
+				<mutation items="3"></mutation>
+			</block>
+			<block type="lists_repeat">
+				<value name="NUM">
+					<shadow type="math_number">
+						<field name="NUM">5</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="lists_length"></block>
+			<block type="lists_isEmpty"></block>
+			<block type="lists_indexOf">
+				<field name="END">FIRST</field>
+				<value name="VALUE">
+					<block type="variables_get">
+						<field name="VAR" id="5@*=rbMyPp0zZ5^/$`^_">list</field>
+					</block>
+				</value>
+			</block>
+			<block type="lists_getIndex">
+				<mutation statement="false" at="true"></mutation>
+				<field name="MODE">GET</field>
+				<field name="WHERE">FROM_START</field>
+				<value name="VALUE">
+					<block type="variables_get">
+						<field name="VAR" id="5@*=rbMyPp0zZ5^/$`^_">list</field>
+					</block>
+				</value>
+			</block>
+			<block type="lists_setIndex">
+				<mutation at="true"></mutation>
+				<field name="MODE">SET</field>
+				<field name="WHERE">FROM_START</field>
+				<value name="LIST">
+					<block type="variables_get">
+						<field name="VAR" id="5@*=rbMyPp0zZ5^/$`^_">list</field>
+					</block>
+				</value>
+			</block>
+			<block type="lists_getSublist">
+				<mutation at1="true" at2="true"></mutation>
+				<field name="WHERE1">FROM_START</field>
+				<field name="WHERE2">FROM_START</field>
+				<value name="LIST">
+					<block type="variables_get">
+						<field name="VAR" id="5@*=rbMyPp0zZ5^/$`^_">list</field>
+					</block>
+				</value>
+			</block>
+			<block type="lists_split">
+				<mutation mode="SPLIT"></mutation>
+				<field name="MODE">SPLIT</field>
+				<value name="DELIM">
+					<shadow type="text">
+						<field name="TEXT">,</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="lists_sort">
+				<field name="TYPE">NUMERIC</field>
+				<field name="DIRECTION">1</field>
+			</block>
+		</category>
+		<category name="Colour" colour="#a5745b">
+			<block type="colour_picker">
+				<field name="COLOUR">#ff0000</field>
+			</block>
+			<block type="colour_random"></block>
+			<block type="colour_rgb">
+				<value name="RED">
+					<shadow type="math_number">
+						<field name="NUM">100</field>
+					</shadow>
+				</value>
+				<value name="GREEN">
+					<shadow type="math_number">
+						<field name="NUM">50</field>
+					</shadow>
+				</value>
+				<value name="BLUE">
+					<shadow type="math_number">
+						<field name="NUM">0</field>
+					</shadow>
+				</value>
+			</block>
+			<block type="colour_blend">
+				<value name="COLOUR1">
+					<shadow type="colour_picker">
+						<field name="COLOUR">#ff0000</field>
+					</shadow>
+				</value>
+				<value name="COLOUR2">
+					<shadow type="colour_picker">
+						<field name="COLOUR">#3333ff</field>
+					</shadow>
+				</value>
+				<value name="RATIO">
+					<shadow type="math_number">
+						<field name="NUM">0.5</field>
+					</shadow>
+				</value>
+			</block>
+		</category>
+		<sep></sep>
+		<category name="Variables" colour="#a55b80" custom="VARIABLE"></category>
+		<category name="Functions" colour="#995ba5" custom="PROCEDURE"></category>
+	</xml>
+	<script src="js/acorn_interpreter.js"></script>
+	<script src="js/uuid_v1.js"></script>
+	<script src="js/perlin.js"></script>
+	<script src="js/three.js"></script>
+	<script src="js/exporter.js"></script>
+	<script src="js/PointerLockControls.js"></script>
+	<script src="dist/code.min.js"></script>
+	<script src="js/blockly_compressed.js"></script>
+	<script src="js/javascript_compressed.js"></script>
+	<script src="js/blocks_compressed.js"></script>
+	<script src="js/en.js"></script>
+	<script src="js/blockly_custom_block_defs.js"></script>
+	<script src="js/blockly_custom_block_code.js"></script>
+	<script src="dist/blockly.min.js"></script>
+
+</body>
+
+</html>
